@@ -1,0 +1,127 @@
+---
+title: "helicopter project"
+date: "2025-03-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load the data
+data <- read.csv('~/Desktop/MAS31004 project excel.csv')
+```
+
+```{r}
+#Print the column names 
+names(data)
+```
+
+
+```{r}
+# Calculate Trial Average 
+data$TrialAverage <- rowMeans(data[, c( "Trial.1..s.",  "Trial.2..s.",  "Trial.3..s.",  "Trial.4..s.")])
+```
+
+
+```{r}
+# Descriptive Statistics 
+summary(data)
+boxplot(TrialAverage ~ `Blade.Shape`  , data=data)
+boxplot(TrialAverage ~ `Blade.Length..cm.` , data=data)
+boxplot(TrialAverage ~ `Added.Weight..g.` , data=data)
+plot(data$`Blade.Length..cm.` , data$TrialAverage)
+plot(data$`Added.Weight..g.` , data$TrialAverage)
+```
+
+```{r}
+# ANOVA 
+
+anova_model <- aov(TrialAverage ~ `Blade.Shape` + `Blade.Length..cm.` + `Added.Weight..g.`, data=data)
+summary(anova_model)
+```
+
+```{r}
+# Correlation between blade length 
+cor_blade_length <- cor.test(data$Blade.Length..cm., data$TrialAverage)
+print(cor_blade_length)
+
+# Correlation between added weight
+cor_added_weight <- cor.test(data$Added.Weight..g., data$TrialAverage)
+print(cor_added_weight)
+```
+
+
+```{r}
+# Regression Analysis 
+
+#regression_model <- aov(TrialAverage ~ `Blade.Length..cm.` + `Added.Weight..g.`, data = data)
+#summary(regression_model)
+
+regression_model_lm <- lm(TrialAverage ~ `Blade.Length..cm.` + `Added.Weight..g.`, data = data)
+summary(regression_model_lm)
+```
+
+
+
+
+```{r}
+# Interaction Effects 
+
+interaction.plot(data$`Blade.Shape`, data$`Blade.Length..cm.`, data$TrialAverage) 
+interaction.plot(data$`Blade.Shape`, data$`Added.Weight..g.`, data$TrialAverage)
+```
+
+```{r}
+# Interaction effects 
+
+interaction_model <- lm(TrialAverage ~ Blade.Length..cm. * Added.Weight..g., data = data)
+summary(interaction_model)
+
+library(ggplot2)
+ggplot(data, aes(x = Blade.Length..cm., y = TrialAverage, color = Added.Weight..g.))+ 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  labs(title="Interaction between Blade Length and Added Weight", 
+       x = "Blade Length (cm)", 
+       y = "Trial Average", 
+       color = "Added Weight (g)")
+```
+
+
+```{r}
+turkey_result <- TukeyHSD(anova_model)
+print(turkey_result)
+```
+
+```{r}
+# ANOVA check 
+
+qqnorm(residuals(anova_model))
+qqline(residuals(anova_model))
+
+hist(residuals(anova_model), main = "Histogram of Residuals")
+
+shapiro.test(residuals(anova_model))
+
+# Residuals vs. Fitted values plot 
+plot(fitted(anova_model), residuals(anova_model), xlab = "Fitted Values", ylab = "Residuals")
+abline(h=0, col="red")
+
+# Scale-Location plot
+plot(anova_model, 3)
+
+#Levene's test 
+library(car)
+leveneTest(TrialAverage ~ Blade.Shape, data = data)
+
+# Bartlett's test
+bartlett.test(TrialAverage ~ Blade.Shape, data = data)
+```
+
+
+
+
+
+
